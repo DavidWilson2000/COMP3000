@@ -1,0 +1,7 @@
+avoid filming only “easy” scenes
+
+include motion blur sometimes (real life has it)
+
+include partial fish (tails, fish half out of frame)
+
+include glare/reflections occasionally

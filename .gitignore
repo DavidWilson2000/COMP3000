@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Generated / large outputs
+runs/
+data/raw_video/
+data/raw_frames/
+data/test_frames/
+data/labels_fish_boxes/
+
+# Datasets
+datasets/
+Legacy Data/
+
+# Model weights
+*.pt
+
+# OS
+Thumbs.db
+.DS_Store
