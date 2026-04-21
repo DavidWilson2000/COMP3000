@@ -144,7 +144,9 @@ def main() -> None:
                 feat_parts.append(hsv_histogram(np_rgb))
             if args.use_size_feats:
                 w, h = pil.size
-                feat_parts.append(np.array([w / (h + 1e-6), (w * h) / (area_med + 1e-6)], dtype=np.float32))
+                feat_parts.append(
+                    np.array([w / (h + 1e-6), (w * h) / (area_med + 1e-6)], dtype=np.float32)
+                )
 
             extras.append(np.concatenate(feat_parts).astype(np.float32) if feat_parts else None)
         except Exception as e:
@@ -168,15 +170,20 @@ def main() -> None:
     if args.use_umap:
         if not UMAP_AVAILABLE:
             print("UMAP requested but umap-learn is not installed. Continuing without UMAP.")
+        elif X.shape[0] < max(10, args.umap_neighbors + 2):
+            print(f"Skipping UMAP: only {X.shape[0]} samples for n_neighbors={args.umap_neighbors}.")
         else:
-            reducer = umap.UMAP(
-                n_neighbors=args.umap_neighbors,
-                n_components=args.umap_dim,
-                min_dist=args.umap_min_dist,
-                metric="cosine",
-                random_state=0,
-            )
-            X = reducer.fit_transform(X).astype(np.float32)
+            try:
+                reducer = umap.UMAP(
+                    n_neighbors=min(args.umap_neighbors, max(2, X.shape[0] - 1)),
+                    n_components=min(args.umap_dim, max(2, X.shape[0] - 1)),
+                    min_dist=args.umap_min_dist,
+                    metric="cosine",
+                    random_state=0,
+                )
+                X = reducer.fit_transform(X).astype(np.float32)
+            except Exception as e:
+                print(f"UMAP failed ({e}). Continuing without UMAP.")
 
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=args.min_cluster_size,

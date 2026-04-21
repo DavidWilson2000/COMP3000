@@ -15,7 +15,6 @@ SCRIPT_EXTRACT = SRC_DIR / "extract_frames.py"
 SCRIPT_SELECT = SRC_DIR / "select_frames_for_labeling.py"
 SCRIPT_CROP = SRC_DIR / "crop_fish_from_frames.py"
 SCRIPT_FILTER = SRC_DIR / "filter_crops_quality.py"
-SCRIPT_DETECT_CLASSIFY = SRC_DIR / "detect_and_classify.py"
 SCRIPT_CLUSTER = SRC_DIR / "cluster_fish.py"
 
 DET_MODEL_CANDIDATES = [
@@ -25,55 +24,37 @@ DET_MODEL_CANDIDATES = [
     Path("yolov8m.pt"),
     Path("yolov8n.pt"),
 ]
-CLS_MODEL_CANDIDATES = [
-    Path("runs/classify/species_loop/weights/best.pt"),
-    Path("runs/classify/runs/species_cls_v2/weights/best.pt"),
-    Path("runs/classify/species_cls_v2/weights/best.pt"),
-    Path("yolov8m-cls.pt"),
-    Path("yolov8n-cls.pt"),
-]
 
 EXTRACT_EVERY_N_FRAMES = 2
-SELECT_MAX_FRAMES = 500
+SELECT_MAX_FRAMES = 1200
 SELECT_MIN_SHARPNESS = 15.0
-SELECT_MIN_SCENE_DELTA = 0.08
-SELECT_BACKFILL = True
+SELECT_MIN_SCENE_DELTA = 0.14
+SELECT_BACKFILL = False
+SELECT_MIN_FRAME_GAP = 12
 
-DETECT_CLASSIFY_SOURCE_KIND = "selected"  # "selected" or "all"
-
-CROP_CONF = 0.25
+CROP_CONF = 0.30
 CROP_IMGSZ = 640
-CROP_PAD = 0.15
-CROP_MIN_SIZE = 32
-CROP_MAX_IMAGES = 2000
+CROP_PAD = 0.10
+CROP_MIN_SIZE = 40
+CROP_MAX_IMAGES = 4000
 
 FILTER_MIN_LONG_SIDE = 96
 FILTER_MIN_AREA = 96 * 96
 FILTER_MIN_SHARPNESS = 20.0
 FILTER_MIN_CONTRAST = 12.0
-FILTER_MIN_ASPECT_RATIO = 0.20
-FILTER_MAX_ASPECT_RATIO = 5.00
-FILTER_DEDUPE_HAMMING = 4
-
-DC_CONF_DET = 0.25
-DC_IMGSZ_DET = 640
-DC_PAD = 0.15
-DC_MIN_CROP = 64
-DC_BLUR_THRESH = 50.0
-DC_CONF_CLS = 0.65
-DC_MARGIN = 0.15
-DC_IMGSZ_CLS = 224
-DC_LIMIT = 0
+FILTER_MIN_ASPECT_RATIO = 0.30
+FILTER_MAX_ASPECT_RATIO = 3.50
+FILTER_DEDUPE_HAMMING = 5
 
 CLUSTER_USE_COLOR_HIST = True
 CLUSTER_USE_SIZE_FEATS = True
 CLUSTER_WHITE_BALANCE = True
-CLUSTER_USE_UMAP = True
+CLUSTER_USE_UMAP = False
 CLUSTER_UMAP_DIM = 32
-CLUSTER_UMAP_NEIGHBORS = 20
+CLUSTER_UMAP_NEIGHBORS = 10
 CLUSTER_UMAP_MIN_DIST = 0.05
-CLUSTER_MIN_CLUSTER_SIZE = 12
-CLUSTER_MIN_SAMPLES = 3
+CLUSTER_MIN_CLUSTER_SIZE = 8
+CLUSTER_MIN_SAMPLES = 5
 
 ARCHIVE_PROCESSED_VIDEO = True
 
@@ -127,13 +108,11 @@ def main() -> None:
     print("Python executable:", sys.executable)
 
     ensure_exists(RAW_VIDEO_DIR, "dir")
-    for script in [SCRIPT_EXTRACT, SCRIPT_SELECT, SCRIPT_CROP, SCRIPT_FILTER, SCRIPT_DETECT_CLASSIFY, SCRIPT_CLUSTER]:
+    for script in [SCRIPT_EXTRACT, SCRIPT_SELECT, SCRIPT_CROP, SCRIPT_FILTER, SCRIPT_CLUSTER]:
         ensure_exists(script, "file")
 
     det_model = resolve_first_existing(DET_MODEL_CANDIDATES, "detector model")
-    cls_model = resolve_first_existing(CLS_MODEL_CANDIDATES, "classifier model")
     print(f"Resolved detector model:   {det_model}")
-    print(f"Resolved classifier model: {cls_model}")
 
     video_path = pick_next_video(RAW_VIDEO_DIR)
     if video_path is None:
@@ -144,10 +123,9 @@ def main() -> None:
     selected_dir = run_dir / "selected_frames"
     crops_dir = run_dir / "crops"
     crops_good_dir = run_dir / "crops_good"
-    annotated_dir = run_dir / "annotated"
     clusters_dir = run_dir / "clusters"
 
-    for d in [frames_dir, selected_dir, crops_dir, crops_good_dir, annotated_dir, clusters_dir]:
+    for d in [frames_dir, selected_dir, crops_dir, crops_good_dir, clusters_dir]:
         d.mkdir(parents=True, exist_ok=True)
 
     print(f"\n🎬 Video: {video_path}")
@@ -170,6 +148,7 @@ def main() -> None:
         "--max", str(SELECT_MAX_FRAMES),
         "--min_sharpness", str(SELECT_MIN_SHARPNESS),
         "--min_scene_delta", str(SELECT_MIN_SCENE_DELTA),
+        "--min_frame_gap", str(SELECT_MIN_FRAME_GAP),
     ]
     if SELECT_BACKFILL:
         select_cmd.append("--backfill")
@@ -208,28 +187,6 @@ def main() -> None:
         ],
     )
 
-    det_source = selected_dir if DETECT_CLASSIFY_SOURCE_KIND == "selected" else frames_dir
-    run_step(
-        "Detect and classify",
-        [
-            sys.executable, str(SCRIPT_DETECT_CLASSIFY),
-            "--source", str(det_source),
-            "--out", str(annotated_dir),
-            "--det_model", str(det_model),
-            "--cls_model", str(cls_model),
-            "--conf_det", str(DC_CONF_DET),
-            "--imgsz_det", str(DC_IMGSZ_DET),
-            "--pad", str(DC_PAD),
-            "--min_crop", str(DC_MIN_CROP),
-            "--blur_thresh", str(DC_BLUR_THRESH),
-            "--conf_cls", str(DC_CONF_CLS),
-            "--margin", str(DC_MARGIN),
-            "--imgsz_cls", str(DC_IMGSZ_CLS),
-            "--limit", str(DC_LIMIT),
-            "--csv_path", str(annotated_dir / "detections.csv"),
-        ],
-    )
-
     cluster_cmd = [
         sys.executable, str(SCRIPT_CLUSTER),
         "--source", str(crops_good_dir),
@@ -260,7 +217,6 @@ def main() -> None:
 
     print("\n✅ Done!")
     print("Run folder:", run_dir)
-    print("Annotated:", annotated_dir)
     print("Clusters:", clusters_dir)
 
 

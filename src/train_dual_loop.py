@@ -25,6 +25,29 @@ BATCH = 32
 def train_detector():
     print("\n=== TRAINING FISH DETECTOR ===\n")
 
+    candidates = [
+        Path("runs/detect/fish_loop/weights/best.pt"),
+        Path("runs/detect/runs/detect/fish_loop/weights/best.pt"),
+        Path("runs/detect/fish_detector_v1/weights/best.pt"),
+    ]
+
+    best_path = next((p for p in candidates if p.exists()), None)
+    model_path = str(best_path) if best_path is not None else DET_MODEL_START
+
+    print(f"Starting detector from: {model_path}")
+
+    model = YOLO(model_path)
+    model.train(
+        data=FISH_DATA,
+        imgsz=IMGSZ_DET,
+        epochs=EPOCHS_PER_CHUNK,
+        batch=BATCH,
+        project=PROJECT_DET,
+        name=FISH_RUN,
+        exist_ok=True,
+    )
+    print("\n=== TRAINING FISH DETECTOR ===\n")
+
     run_dir = Path(PROJECT_DET) / FISH_RUN
     best_path = run_dir / "weights" / "best.pt"
 

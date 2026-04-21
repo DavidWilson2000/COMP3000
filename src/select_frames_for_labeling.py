@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import math
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,10 +18,16 @@ class FrameInfo:
     sharpness: float
     brightness: float
     signature: np.ndarray
+    frame_idx: int
 
 
 def iter_images(folder: Path) -> list[Path]:
     return sorted([p for p in folder.rglob("*") if p.suffix.lower() in IMG_EXTS])
+
+
+def extract_frame_index(path: Path) -> int:
+    m = re.search(r"frame_(\d+)", path.stem)
+    return int(m.group(1)) if m else -1
 
 
 def compute_signature(bgr: np.ndarray, size: int = 24) -> np.ndarray:
@@ -62,6 +68,7 @@ def build_frame_infos(paths: list[Path], min_sharpness: float) -> list[FrameInfo
                 sharpness=sharp,
                 brightness=brightness_score(img),
                 signature=compute_signature(img),
+                frame_idx=extract_frame_index(path),
             )
         )
 
@@ -69,7 +76,6 @@ def build_frame_infos(paths: list[Path], min_sharpness: float) -> list[FrameInfo
 
 
 def signature_distance(a: np.ndarray, b: np.ndarray) -> float:
-    # cosine distance on normalized signatures
     sim = float(np.clip(np.dot(a, b), -1.0, 1.0))
     return 1.0 - sim
 
@@ -78,12 +84,12 @@ def greedy_diverse_select(
     infos: list[FrameInfo],
     max_keep: int,
     min_scene_delta: float,
+    min_frame_gap: int,
     backfill: bool,
 ) -> list[FrameInfo]:
     if not infos:
         return []
 
-    # Prefer crisp, reasonably bright frames first.
     infos_sorted = sorted(
         infos,
         key=lambda x: (x.sharpness, -abs(x.brightness - 110.0)),
@@ -100,6 +106,13 @@ def greedy_diverse_select(
             selected.append(info)
             continue
 
+        too_close_in_time = any(
+            s.frame_idx >= 0 and info.frame_idx >= 0 and abs(info.frame_idx - s.frame_idx) < min_frame_gap
+            for s in selected
+        )
+        if too_close_in_time:
+            continue
+
         min_dist = min(signature_distance(info.signature, s.signature) for s in selected)
         if min_dist >= min_scene_delta:
             selected.append(info)
@@ -111,10 +124,18 @@ def greedy_diverse_select(
                 break
             if info.path in selected_paths:
                 continue
+
+            too_close_in_time = any(
+                s.frame_idx >= 0 and info.frame_idx >= 0 and abs(info.frame_idx - s.frame_idx) < min_frame_gap
+                for s in selected
+            )
+            if too_close_in_time:
+                continue
+
             selected.append(info)
             selected_paths.add(info.path)
 
-    return selected
+    return sorted(selected, key=lambda x: x.frame_idx)
 
 
 def main() -> None:
@@ -122,27 +143,14 @@ def main() -> None:
     parser.add_argument("--source", required=True, help="Folder containing extracted video frames")
     parser.add_argument("--out", required=True, help="Output folder for selected frames")
     parser.add_argument("--max", type=int, default=300, help="Maximum number of frames to keep")
-    parser.add_argument(
-        "--min_sharpness",
-        type=float,
-        default=15.0,
-        help="Reject frames blurrier than this Laplacian-variance threshold",
-    )
-    parser.add_argument(
-        "--min_scene_delta",
-        type=float,
-        default=0.08,
-        help="Minimum cosine-distance between kept frame signatures",
-    )
-    parser.add_argument(
-        "--backfill",
-        action="store_true",
-        help="If diversity filtering keeps too few frames, fill remaining slots with the sharpest unused frames",
-    )
+    parser.add_argument("--min_sharpness", type=float, default=15.0)
+    parser.add_argument("--min_scene_delta", type=float, default=0.12)
+    parser.add_argument("--min_frame_gap", type=int, default=20, help="Minimum gap in frame numbers between selected frames")
+    parser.add_argument("--backfill", action="store_true")
     args = parser.parse_args()
 
-    source_dir = Path(args.source)
-    out_dir = Path(args.out)
+    source_dir = Path(args.source).resolve()
+    out_dir = Path(args.out).resolve()
 
     if not source_dir.is_dir():
         raise RuntimeError(f"Source directory not found: {source_dir}")
@@ -159,14 +167,13 @@ def main() -> None:
     print(f"Usable after sharpness filter: {len(infos)}")
 
     if not infos:
-        raise RuntimeError(
-            "No frames met the sharpness threshold. Lower --min_sharpness or inspect the source video."
-        )
+        raise RuntimeError("No frames met the sharpness threshold.")
 
     selected = greedy_diverse_select(
         infos=infos,
         max_keep=max(1, args.max),
         min_scene_delta=max(0.0, args.min_scene_delta),
+        min_frame_gap=max(0, args.min_frame_gap),
         backfill=args.backfill,
     )
 
