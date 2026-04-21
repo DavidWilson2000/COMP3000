@@ -7,13 +7,13 @@ from ultralytics import YOLO
 
 # ---------------- CONFIG ----------------
 FISH_DATA = "datasets/fish_dataset/data.yaml"
-PROJECT_DET = "runs/detect"
+PROJECT_DET = "runs/detect/runs/detect"
 FISH_RUN = "fish_loop"
 
 DET_MODEL_START = "yolov8m.pt"
 DEFAULT_EPOCHS = 50
-DEFAULT_IMGSZ = 640
-DEFAULT_BATCH = 32
+DEFAULT_IMGSZ = 512
+DEFAULT_BATCH = 8
 # ---------------------------------------
 
 

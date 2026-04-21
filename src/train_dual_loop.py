@@ -16,9 +16,9 @@ DET_MODEL_START = "yolov8m.pt"
 CLS_MODEL_START = "yolov8m-cls.pt"
 
 EPOCHS_PER_CHUNK = 50
-IMGSZ_DET = 640
+IMGSZ_DET = 512
 IMGSZ_CLS = 224
-BATCH = 32
+BATCH = 8
 # ---------------------------------------
 
 
