@@ -13,6 +13,13 @@ data/raw_frames/
 data/test_frames/
 data/labels_fish_boxes/
 
+# Generated fish crops / extracted images
+data/crops_fish/
+data/crops_good/
+data/crops_bad/
+data/selected_frames/
+data/frames/
+
 # Datasets
 datasets/
 Legacy Data/
