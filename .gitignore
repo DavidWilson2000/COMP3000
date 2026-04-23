@@ -20,6 +20,11 @@ data/crops_bad/
 data/selected_frames/
 data/frames/
 
+# UI build output
+src/build/
+src/dist/
+src/*.spec
+
 # Datasets
 datasets/
 Legacy Data/
