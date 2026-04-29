@@ -6,8 +6,10 @@ import argparse
 from ultralytics import YOLO
 
 # ---------------- CONFIG ----------------
-FISH_DATA = "datasets/fish_dataset/data.yaml"
-PROJECT_DET = "runs/detect/runs/detect"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+FISH_DATA = PROJECT_ROOT / "datasets" / "fish_dataset" / "data.yaml"
+PROJECT_DET = PROJECT_ROOT / "runs" / "detect"
 FISH_RUN = "fish_loop"
 
 DET_MODEL_START = "yolov8m.pt"
@@ -18,10 +20,11 @@ DEFAULT_BATCH = 8
 
 
 def train_detector_once(epochs: int, imgsz: int, batch: int) -> Path:
-    run_dir = Path(PROJECT_DET) / FISH_RUN
+    run_dir = PROJECT_DET / FISH_RUN
     best_path = run_dir / "weights" / "best.pt"
 
     model_path = str(best_path) if best_path.exists() else DET_MODEL_START
+
     print(f"\n=== TRAINING FISH DETECTOR ===")
     print(f"Starting from: {model_path}")
     print(f"Dataset:       {FISH_DATA}")
@@ -31,12 +34,13 @@ def train_detector_once(epochs: int, imgsz: int, batch: int) -> Path:
     print(f"Batch:         {batch}\n")
 
     model = YOLO(model_path)
+
     model.train(
-        data=FISH_DATA,
+        data=str(FISH_DATA),
         imgsz=imgsz,
         epochs=epochs,
         batch=batch,
-        project=PROJECT_DET,
+        project=str(PROJECT_DET),
         name=FISH_RUN,
         exist_ok=True,
     )
