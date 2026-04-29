@@ -1,0 +1,29 @@
+Ref 1 : https://www.tableau.com/data-insights/ai/history#ai-birth
+Ref 2 : https://thefishsite.com/articles/the-rise-of-ai-in-aquaculture-artificial-intelligence#:~:text=As%20a%20result%2C%20AI%20is,and%20reduction%20of%20labour%20costs.
+Ref 3 : https://www.ibm.com/think/topics/object-detection#:~:text=Object%20detection%20is%20a%20computer,objects%20according%20to%20semantic%20categories.
+Ref 4 : https://www.v7labs.com/blog/yolo-object-detection
+Ref 5 : https://app.roboflow.com/dave-8cwv9/home
+Ref 6 : https://arxiv.org/html/2502.18530v1
+
+Ref 7 : https://link.springer.com/article/10.3758/s13428-024-02420-5
+Ref 8 : https://sciresol.s3.us-east-2.amazonaws.com/IJST/Articles/2023/Issue-45/IJST-2023-2658.pdf
+Ref 9 : https://www.mdpi.com/2076-3417/12/5/2405
+Ref 10 : https://mirror.umd.edu/roswiki/attachments/Events(2f)ICRA2010Tutorial/ICRA_2010_OpenCV_Tutorial.pdf
+Ref 11 : https://link.springer.com/chapter/10.1007/978-1-4842-5364-9_2
+
+
+
+
+
+279 word count for Figures
+
+
+
+
+
+
+
+
+
+
+Figure 1 
