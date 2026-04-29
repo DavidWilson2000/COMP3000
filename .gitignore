@@ -6,9 +6,42 @@ __pycache__/
 # VS Code
 .vscode/
 
+# --------------------------------------------------
 # Generated / large outputs
-runs/
-data/raw_video/
+# --------------------------------------------------
+
+# Ignore generated YOLO run contents by default
+runs/*
+
+# Allow final detector run folder structure
+!runs/detect/
+runs/detect/*
+!runs/detect/fish_loop/
+runs/detect/fish_loop/*
+
+# Allow final trained model only
+!runs/detect/fish_loop/weights/
+runs/detect/fish_loop/weights/*
+!runs/detect/fish_loop/weights/best.pt
+
+# Allow useful final evaluation/dashboard evidence
+!runs/detect/fish_loop/results.png
+!runs/detect/fish_loop/results.csv
+!runs/detect/fish_loop/confusion_matrix.png
+!runs/detect/fish_loop/confusion_matrix_normalized.png
+!runs/detect/fish_loop/args.yaml
+
+# --------------------------------------------------
+# Raw/sample video handling
+# --------------------------------------------------
+
+# Ignore raw videos by default
+data/raw_video/*
+
+# Allow one sample video so the pipeline can be tested
+!data/raw_video/sample_video.mp4
+
+# Other generated frame/output folders
 data/raw_frames/
 data/test_frames/
 data/labels_fish_boxes/
@@ -20,18 +53,31 @@ data/crops_bad/
 data/selected_frames/
 data/frames/
 
+# --------------------------------------------------
 # UI build output
+# --------------------------------------------------
 src/build/
 src/dist/
 src/*.spec
 
+# --------------------------------------------------
 # Datasets
+# --------------------------------------------------
 datasets/
 Legacy Data/
 
+# --------------------------------------------------
 # Model weights
+# --------------------------------------------------
+
+# Ignore model weights by default
 *.pt
 
+# But allow the final usable detector model
+!runs/detect/fish_loop/weights/best.pt
+
+# --------------------------------------------------
 # OS
+# --------------------------------------------------
 Thumbs.db
 .DS_Store
