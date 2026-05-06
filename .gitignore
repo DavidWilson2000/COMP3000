@@ -1,52 +1,37 @@
-# Python
+# --------------------------------------------------
+# Python / editor files
+# --------------------------------------------------
 .venv/
 __pycache__/
 *.pyc
-
-# VS Code
 .vscode/
 
 # --------------------------------------------------
-# Generated / large outputs
+# Documents / large videos
 # --------------------------------------------------
-
-# Ignore generated YOLO run contents by default
-runs/*
-
-# Allow final detector run folder structure
-!runs/detect/
-runs/detect/*
-!runs/detect/fish_loop/
-runs/detect/fish_loop/*
-
-# Allow final trained model only
-!runs/detect/fish_loop/weights/
-runs/detect/fish_loop/weights/*
-!runs/detect/fish_loop/weights/best.pt
-
-# Allow useful final evaluation/dashboard evidence
-!runs/detect/fish_loop/results.png
-!runs/detect/fish_loop/results.csv
-!runs/detect/fish_loop/confusion_matrix.png
-!runs/detect/fish_loop/confusion_matrix_normalized.png
-!runs/detect/fish_loop/args.yaml
+Documents/*.mp4
+*.mp4
+!data/raw_video/sample_video.mp4
 
 # --------------------------------------------------
 # Raw/sample video handling
 # --------------------------------------------------
-
-# Ignore raw videos by default
 data/raw_video/*
-
-# Allow one sample video so the pipeline can be tested
+!data/
+!data/raw_video/
 !data/raw_video/sample_video.mp4
+!data/raw_video/.gitkeep
 
-# Other generated frame/output folders
+data/raw_video/_processed/*
+!data/raw_video/_processed/
+!data/raw_video/_processed/.gitkeep
+
+# --------------------------------------------------
+# Generated frame/output folders
+# --------------------------------------------------
 data/raw_frames/
 data/test_frames/
 data/labels_fish_boxes/
-
-# Generated fish crops / extracted images
 data/crops_fish/
 data/crops_good/
 data/crops_bad/
@@ -54,30 +39,73 @@ data/selected_frames/
 data/frames/
 
 # --------------------------------------------------
-# UI build output
+# YOLO / pipeline runs
 # --------------------------------------------------
-src/build/
-src/dist/
-src/*.spec
+runs/*
 
-# --------------------------------------------------
-# Datasets
-# --------------------------------------------------
-datasets/
-Legacy Data/
+# Keep required runs folders so dashboard buttons work
+!runs/
+!runs/detect/
+!runs/video_runs/
+!runs/video_runs/.gitkeep
+
+# Keep final detector run evidence
+runs/detect/*
+!runs/detect/fish_loop/
+runs/detect/fish_loop/*
+
+!runs/detect/fish_loop/results.png
+!runs/detect/fish_loop/results.csv
+!runs/detect/fish_loop/confusion_matrix.png
+!runs/detect/fish_loop/confusion_matrix_normalized.png
+!runs/detect/fish_loop/args.yaml
+
+# Keep final detector weights if using Git LFS
+!runs/detect/fish_loop/weights/
+runs/detect/fish_loop/weights/*
+!runs/detect/fish_loop/weights/best.pt
 
 # --------------------------------------------------
 # Model weights
 # --------------------------------------------------
-
-# Ignore model weights by default
 *.pt
-
-# But allow the final usable detector model
 !runs/detect/fish_loop/weights/best.pt
 
 # --------------------------------------------------
-# OS
+# Dataset
+# --------------------------------------------------
+datasets/*
+!datasets/
+!datasets/fish_dataset/
+!datasets/fish_dataset/**
+
+# Ignore cache files only
+datasets/**/labels.cache
+datasets/**/*.cache
+
+Legacy Data/
+
+# --------------------------------------------------
+# UI build output
+# --------------------------------------------------
+
+# Ignore temporary PyInstaller build folder
+src/build/
+
+# Keep final runnable dashboard app
+src/dist/*
+!src/dist/
+!src/dist/FishAIDashboard/
+!src/dist/FishAIDashboard/**
+!src/dist/FishAIDashboard/FishAIDashboard.exe
+!src/dist/FishAIDashboard/_internal/
+!src/dist/FishAIDashboard/_internal/**
+
+# Spec files are not needed for normal running
+src/*.spec
+
+# --------------------------------------------------
+# OS files
 # --------------------------------------------------
 Thumbs.db
 .DS_Store

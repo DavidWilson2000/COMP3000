@@ -1,0 +1,2 @@
+runs/detect/fish_loop/weights/best.pt filter=lfs diff=lfs merge=lfs -text
+data/raw_video/sample_video.mp4 filter=lfs diff=lfs merge=lfs -text
