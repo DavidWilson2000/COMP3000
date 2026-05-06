@@ -43,6 +43,10 @@ def stream_subprocess(
 
     def worker() -> None:
         try:
+            creationflags = 0
+            if sys.platform.startswith("win"):
+                creationflags = subprocess.CREATE_NO_WINDOW
+
             proc = subprocess.Popen(
                 cmd,
                 cwd=str(cwd),
@@ -50,6 +54,7 @@ def stream_subprocess(
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
+                creationflags=creationflags,
             )
 
             assert proc.stdout is not None

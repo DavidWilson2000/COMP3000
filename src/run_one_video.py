@@ -89,7 +89,7 @@ def run_step(step_name: str, cmd: list[str]) -> None:
         print("\n--- STDERR ---")
         print(result.stderr)
     if result.returncode != 0:
-        raise SystemExit(f"\n❌ Step failed: {step_name} (exit code {result.returncode})")
+        raise SystemExit(f"\n Step failed: {step_name} (exit code {result.returncode})")
 
 
 def pick_next_video(raw_dir: Path) -> Path | None:
@@ -128,8 +128,8 @@ def main() -> None:
     for d in [frames_dir, selected_dir, crops_dir, crops_good_dir, clusters_dir]:
         d.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n🎬 Video: {video_path}")
-    print(f"📁 Run dir: {run_dir}")
+    print(f"\n Video: {video_path}")
+    print(f" Run dir: {run_dir}")
 
     run_step(
         "Extract frames",
@@ -213,9 +213,9 @@ def main() -> None:
         archive_dir = RAW_VIDEO_DIR / "_processed"
         archive_dir.mkdir(exist_ok=True)
         shutil.move(str(video_path), str(archive_dir / video_path.name))
-        print(f"\n📦 Moved video to: {archive_dir / video_path.name}")
+        print(f"\n Moved video to: {archive_dir / video_path.name}")
 
-    print("\n✅ Done!")
+    print("\n Done!")
     print("Run folder:", run_dir)
     print("Clusters:", clusters_dir)
 

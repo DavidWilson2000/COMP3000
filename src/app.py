@@ -207,7 +207,7 @@ class FishAIDashboard(tk.Tk):
         self.append_log(f"\n=== {name} ===")
 
         python_exe = choose_existing_python(config.DEFAULT_VENV_PYTHON)
-        cmd = [python_exe, str(script)]
+        cmd = [python_exe, "-u", str(script)]
 
         def on_line(line: str) -> None:
             self.after(0, lambda: self.append_log(line))

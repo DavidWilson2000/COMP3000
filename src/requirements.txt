@@ -1,2 +1,9 @@
-pillow>=10.0.0
-pyinstaller>=6.0.0
+ultralytics
+opencv-python
+pillow
+numpy
+torch
+torchvision
+scikit-learn
+hdbscan
+umap-learn
