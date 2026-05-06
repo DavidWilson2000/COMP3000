@@ -1,32 +1,283 @@
 # Smart Aqua Fish Detection Pipeline
 
-## 1. Project Overview
+Smart Aqua is a computer vision system for processing aquarium/fish video footage. It provides an end-to-end workflow for:
 
-Smart Aqua is a computer vision pipeline designed to process aquarium video footage and prepare useful fish image data for training, testing, and dataset creation.
+1. extracting frames from video,
+2. selecting useful frames,
+3. detecting fish using YOLOv8,
+4. cropping detected fish,
+5. filtering low-quality crops,
+6. clustering visually similar fish crops,
+7. reviewing outputs through a desktop dashboard.
 
-The system takes a raw aquarium video, extracts frames from it, selects useful frames, detects fish using a YOLO model, crops the detected fish, filters out low-quality crops, and groups similar fish crops into clusters.
-
-This helps reduce the amount of manual work needed when creating a fish dataset. Instead of manually searching through thousands of video frames, the pipeline automatically produces organised images that can be reviewed, labelled, or uploaded to a tool such as Roboflow.
-
----
-
-## 2. Main Goal
-
-The main goal of this project is to create a repeatable pipeline for generating useful fish image data from raw video footage.
-
-The project is designed to:
-
-- Extract frames from aquarium videos
-- Remove unnecessary or repeated frames
-- Detect fish in selected frames
-- Crop detected fish into separate images
-- Remove poor-quality crops
-- Group similar fish images together
-- Produce organised folders and CSV reports for review
+The project is designed as a lightweight fish video analysis workflow. The clustering stage groups visually similar fish crops, but it should not be treated as confirmed species identification.
 
 ---
 
-## 3. How the Pipeline Works
+# Important: Downloading the Project Correctly
+
+This project uses **Git LFS** for large files such as:
+
+```text
+runs/detect/fish_loop/weights/best.pt
+data/raw_video/sample_video.mp4
+```
+
+Do **not** use “Download ZIP” unless you are sure GitHub has included the full LFS files.
+
+The safest way to download the project is:
+
+```bash
+git lfs install
+git clone https://github.com/DavidWilson2000/COMP3000.git
+cd COMP3000
+git lfs pull
+```
+
+After cloning, check that the model file exists and is not tiny:
+
+```text
+runs/detect/fish_loop/weights/best.pt
+```
+
+The real `best.pt` should be around 100MB+. If it is about 1KB, Git LFS has not downloaded the real model. Run:
+
+```bash
+git lfs pull
+git lfs checkout
+```
+
+---
+
+# Recommended Setup on a New Windows PC
+
+## 1. Install Python
+
+Install Python **3.11 or 3.12**.
+
+During installation, tick:
+
+```text
+Add Python to PATH
+```
+
+Check Python is installed:
+
+```bash
+python --version
+```
+
+---
+
+## 2. Open the Project Root
+
+Open Command Prompt or PowerShell in the main project folder.
+
+The project root should contain:
+
+```text
+src/
+runs/
+data/
+datasets/
+Documents/
+README.md
+```
+
+Example:
+
+```bash
+cd C:\Users\YourName\Downloads\COMP3000
+```
+
+---
+
+## 3. Create a Virtual Environment
+
+From the project root, run:
+
+```bash
+python -m venv .venv
+```
+
+### If using Command Prompt
+
+```bat
+.venv\Scripts\activate.bat
+```
+
+### If using PowerShell
+
+If PowerShell blocks activation with a security error, run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Then activate:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+You should see `(.venv)` at the start of the terminal line.
+
+---
+
+## 4. Install Requirements
+
+From the project root, with the virtual environment activated, run:
+
+```bash
+pip install -r src\requirements.txt
+```
+
+This installs the packages needed for the detector, pipeline, clustering, and dashboard scripts.
+
+If `cv2` is missing, install OpenCV manually:
+
+```bash
+pip install opencv-python
+```
+
+---
+
+# Building the Dashboard UI
+
+The dashboard executable is built using:
+
+```text
+src/build_exe.bat
+```
+
+To build it:
+
+```bash
+cd src
+build_exe.bat
+```
+
+After the build finishes, open:
+
+```text
+src/dist/FishAIDashboard/
+```
+
+Run:
+
+```text
+FishAIDashboard.exe
+```
+
+The correct folder structure is:
+
+```text
+src/dist/FishAIDashboard/
+    FishAIDashboard.exe
+    _internal/
+```
+
+Do **not** move `FishAIDashboard.exe` away from `_internal`.
+
+If you want to run it from the desktop, create a shortcut to:
+
+```text
+src/dist/FishAIDashboard/FishAIDashboard.exe
+```
+
+Do **not** run the EXE from:
+
+```text
+src/build/
+```
+
+The `build` folder is temporary and can cause missing Python DLL errors.
+
+---
+
+# Running the Dashboard
+
+Once the requirements are installed and the dashboard has been built:
+
+1. Open:
+
+```text
+src/dist/FishAIDashboard/
+```
+
+2. Double-click:
+
+```text
+FishAIDashboard.exe
+```
+
+3. Click:
+
+```text
+Refresh Summary
+```
+
+4. Add a video to:
+
+```text
+data/raw_video/
+```
+
+5. Click:
+
+```text
+Run Video Pipeline
+```
+
+The dashboard allows users to:
+
+- run the video pipeline,
+- train the detector,
+- open raw video folders,
+- open processed video folders,
+- open latest video run folders,
+- open dataset folders,
+- open detector run folders,
+- view latest metrics,
+- open the results graph,
+- open the confusion matrix.
+
+---
+
+# Running the Video Pipeline Without the Dashboard
+
+From the project root:
+
+```bash
+.venv\Scripts\activate.bat
+python src\run_one_video.py
+```
+
+Or in PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+python src\run_one_video.py
+```
+
+Before running, make sure there is a video inside:
+
+```text
+data/raw_video/
+```
+
+Supported video formats:
+
+```text
+.mp4
+.mov
+.avi
+.mkv
+```
+
+---
+
+# Project Workflow
 
 The full pipeline is controlled by:
 
@@ -34,7 +285,7 @@ The full pipeline is controlled by:
 src/run_one_video.py
 ```
 
-This script runs each stage in order.
+The workflow is:
 
 ```text
 Raw video
@@ -52,7 +303,7 @@ Cluster similar fish crops
 Save final outputs
 ```
 
-Each processed video creates a new timestamped run folder inside:
+Each processed video creates a timestamped folder inside:
 
 ```text
 runs/video_runs/
@@ -61,389 +312,138 @@ runs/video_runs/
 Example:
 
 ```text
-runs/video_runs/aquarium_video__2026-04-30_21-38-08/
+runs/video_runs/FishFullA__2026-05-06_13-45-41/
 ```
 
 ---
 
-## 4. Project Folder Structure
+# Main Output Folders
+
+Each video run may contain:
 
 ```text
-project-root/
-│
-├── data/
-│   └── raw_video/
-│       ├── example_video.mp4
-│       └── _processed/
-│
-├── runs/
-│   ├── detect/
-│   │   └── fish_loop/
-│   │       └── weights/
-│   │           └── best.pt
-│   │
-│   └── video_runs/
-│       └── video_name__date_time/
-│           ├── frames/
-│           ├── selected_frames/
-│           ├── crops/
-│           ├── crops_good/
-│           └── clusters/
-│
-├── src/
-│   ├── run_one_video.py
-│   ├── extract_frames.py
-│   ├── select_frames_for_labeling.py
-│   ├── crop_fish_from_frames.py
-│   ├── filter_crops_quality.py
-│   └── cluster_fish.py
-│
-└── README.md
+frames/
+selected_frames/
+crops/
+crops_good/
+clusters/
 ```
+
+## Output meaning
+
+| Folder/File | Purpose |
+|---|---|
+| `frames/` | All extracted video frames. |
+| `selected_frames/` | Clearer and more useful frames selected for detection. |
+| `crops/` | Raw fish crops created from YOLO detections. |
+| `crops/crops.csv` | Metadata for detected crops. |
+| `crops_good/` | Crops that passed quality filtering. |
+| `crops_good/filter_report.csv` | Shows which crops were kept or rejected and why. |
+| `clusters/` | Fish crops grouped into visually similar folders. |
+| `clusters/clusters_summary.csv` | Number of crops in each cluster. |
+| `clusters/cluster_map.csv` | Maps original crop paths to cluster output paths. |
 
 ---
 
-## 5. Main Controller: `run_one_video.py`
+# Detection Model
 
-The most important file in this project is:
-
-```text
-src/run_one_video.py
-```
-
-This file controls the full pipeline. It defines the main settings for each stage, finds the input video, creates the output folders, runs each script, and moves the processed video into an archive folder when finished.
-
-Most changes to the pipeline can be made by editing the configuration values near the top of `run_one_video.py`.
-
----
-
-## 6. Input Videos
-
-Raw videos should be placed inside:
-
-```text
-data/raw_video/
-```
-
-Supported video formats are:
-
-```text
-.mp4
-.mov
-.avi
-.mkv
-```
-
-Example:
-
-```text
-data/raw_video/fish_tank_video.mp4
-```
-
-When the pipeline runs, it automatically selects the next video from this folder.
-
----
-
-## 7. Detection Model
-
-The fish detection stage uses a YOLO model.
-
-The preferred model path is:
+The final trained detector should be located at:
 
 ```text
 runs/detect/fish_loop/weights/best.pt
 ```
 
-The model is selected from this list in `run_one_video.py`:
+This file is required for the crop extraction stage.
 
-```python
-DET_MODEL_CANDIDATES = [
-    Path("runs/detect/fish_loop/weights/best.pt"),
-    Path("runs/detect/runs/detect/fish_loop/weights/best.pt"),
-    Path("runs/detect/fish_detector_v1/weights/best.pt"),
-    Path("yolov8m.pt"),
-    Path("yolov8n.pt"),
-]
+If the file is missing or only 1KB, Git LFS has not downloaded it properly. Run:
+
+```bash
+git lfs pull
+git lfs checkout
 ```
 
-The script uses the first model file it can find.
+If the model is still missing, the detector can be retrained using:
 
-A custom trained fish detection model is recommended because the default YOLO models may not reliably detect aquarium fish.
+```bash
+python src\train_detector_only.py
+```
+
+or by pressing:
+
+```text
+Train Detector
+```
+
+inside the dashboard.
 
 ---
 
-# Pipeline Stages
+# Dataset Location
+
+The YOLO dataset should be located at:
+
+```text
+datasets/fish_dataset/
+```
+
+The dataset YAML should be:
+
+```text
+datasets/fish_dataset/data.yaml
+```
+
+The detector was trained as a single-class detector using the class:
+
+```text
+Fish
+```
 
 ---
 
-## 8. Stage One: Frame Extraction
-
-### Purpose
-
-The frame extraction stage takes the raw video and saves individual image frames from it.
-
-This is handled by:
+# Main Source Files
 
 ```text
-src/extract_frames.py
+src/app.py                         Dashboard UI
+src/run_one_video.py               Full video pipeline runner
+src/train_detector_only.py         YOLOv8 detector training script
+src/extract_frames.py              Frame extraction
+src/select_frames_for_labeling.py  Frame selection
+src/crop_fish_from_frames.py       Fish detection and crop extraction
+src/filter_crops_quality.py        Crop quality filtering
+src/cluster_fish.py                Visual clustering
+src/config.py                      Project paths and dashboard configuration
+src/metrics_reader.py              Reads latest training metrics
+src/ui_helpers.py                  UI helper functions
+src/build_exe.bat                  Builds the dashboard executable
+src/requirements.txt               Python package requirements
 ```
 
-### Output Folder
+---
 
-Extracted frames are saved into:
+# Pipeline Configuration
+
+Most pipeline settings are near the top of:
 
 ```text
-runs/video_runs/<run_name>/frames/
+src/run_one_video.py
 ```
 
-### Configuration
-
-Frame extraction is configured in `run_one_video.py`:
+Important settings include:
 
 ```python
 EXTRACT_EVERY_N_FRAMES = 1
-```
-
-### What This Setting Means
-
-| Value | Meaning |
-|---:|---|
-| `1` | Save every frame |
-| `2` | Save every second frame |
-| `5` | Save every fifth frame |
-| `10` | Save every tenth frame |
-
-### Recommended Setting
-
-For maximum dataset creation, use:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 1
-```
-
-For quicker testing, use:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 5
-```
-
----
-
-## 9. Stage Two: Frame Selection
-
-### Purpose
-
-The frame selection stage chooses useful frames from the extracted frames.
-
-Aquarium videos often contain thousands of frames that look almost identical. This stage reduces duplication by keeping sharper and more useful frames.
-
-This is handled by:
-
-```text
-src/select_frames_for_labeling.py
-```
-
-### Output Folder
-
-Selected frames are saved into:
-
-```text
-runs/video_runs/<run_name>/selected_frames/
-```
-
-### Configuration
-
-Frame selection is configured in `run_one_video.py`:
-
-```python
 SELECT_MAX_FRAMES = 1200
 SELECT_MIN_SHARPNESS = 5.0
 SELECT_MIN_SCENE_DELTA = 0.02
 SELECT_BACKFILL = True
 SELECT_MIN_FRAME_GAP = 2
-```
 
-### Settings Explained
-
-| Setting | Current Value | What It Does |
-|---|---:|---|
-| `SELECT_MAX_FRAMES` | `1200` | Maximum number of frames to keep. |
-| `SELECT_MIN_SHARPNESS` | `5.0` | Removes very blurry frames. Lower values keep more frames. |
-| `SELECT_MIN_SCENE_DELTA` | `0.02` | Controls how visually different frames must be. Lower values keep more similar frames. |
-| `SELECT_BACKFILL` | `True` | Fills the selected folder with extra usable frames if too few are selected. |
-| `SELECT_MIN_FRAME_GAP` | `2` | Minimum gap between selected frame numbers. Lower values allow frames closer together. |
-
-### Important Note
-
-If the project extracts thousands of frames but only selects a very small number, the frame selection settings are probably too strict.
-
-For example, if the pipeline extracts:
-
-```text
-3306 frames
-```
-
-but only selects:
-
-```text
-7 selected frames
-```
-
-then the selector is likely rejecting frames because they are too visually similar.
-
-### Recommended Frame Selection Settings
-
-For a good balance between useful data and reduced duplication, use:
-
-```python
-SELECT_MAX_FRAMES = 1200
-SELECT_MIN_SHARPNESS = 5.0
-SELECT_MIN_SCENE_DELTA = 0.02
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 2
-```
-
-### Maximum Frame Retention
-
-To keep almost every usable frame, use:
-
-```python
-SELECT_MAX_FRAMES = 3306
-SELECT_MIN_SHARPNESS = 0.0
-SELECT_MIN_SCENE_DELTA = 0.0
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 1
-```
-
-This is useful when the video has many similar frames but the fish are still visible and useful for training.
-
----
-
-## 10. Stage Three: Fish Detection and Cropping
-
-### Purpose
-
-The cropping stage uses the YOLO detection model to find fish in the selected frames. Each detected fish is cropped and saved as a separate image.
-
-This is handled by:
-
-```text
-src/crop_fish_from_frames.py
-```
-
-### Output Folder
-
-Fish crops are saved into:
-
-```text
-runs/video_runs/<run_name>/crops/
-```
-
-A CSV file is also created:
-
-```text
-runs/video_runs/<run_name>/crops/crops.csv
-```
-
-This CSV stores metadata about each crop, including the source frame, bounding box coordinates, detection confidence, crop width, and crop height.
-
-### Configuration
-
-Fish detection and cropping are configured in `run_one_video.py`:
-
-```python
 CROP_CONF = 0.30
 CROP_IMGSZ = 640
 CROP_PAD = 0.10
 CROP_MIN_SIZE = 40
 CROP_MAX_IMAGES = 4000
-```
 
-### Settings Explained
-
-| Setting | Current Value | What It Does |
-|---|---:|---|
-| `CROP_CONF` | `0.30` | Minimum confidence needed to accept a YOLO fish detection. |
-| `CROP_IMGSZ` | `640` | Image size used during YOLO inference. |
-| `CROP_PAD` | `0.10` | Adds padding around each detected fish before cropping. |
-| `CROP_MIN_SIZE` | `40` | Rejects crops smaller than 40 pixels on the shortest side. |
-| `CROP_MAX_IMAGES` | `4000` | Maximum number of selected frames to process. |
-
-### If Fish Are Being Missed
-
-Lower the confidence threshold:
-
-```python
-CROP_CONF = 0.20
-```
-
-### If Too Many False Detections Are Included
-
-Increase the confidence threshold:
-
-```python
-CROP_CONF = 0.40
-```
-
-### If Crops Are Too Tight
-
-Increase the padding:
-
-```python
-CROP_PAD = 0.15
-```
-
-### If Crops Contain Too Much Background
-
-Reduce the padding:
-
-```python
-CROP_PAD = 0.05
-```
-
----
-
-## 11. Stage Four: Crop Quality Filtering
-
-### Purpose
-
-The crop filtering stage removes poor-quality fish crops.
-
-It can reject crops that are:
-
-- Too small
-- Too blurry
-- Too low contrast
-- The wrong shape
-- Near duplicates of another crop
-
-This is handled by:
-
-```text
-src/filter_crops_quality.py
-```
-
-### Output Folder
-
-Filtered crops are saved into:
-
-```text
-runs/video_runs/<run_name>/crops_good/
-```
-
-A report is also created:
-
-```text
-runs/video_runs/<run_name>/crops_good/filter_report.csv
-```
-
-This report shows which crops were kept or rejected and the reason for each decision.
-
-### Configuration
-
-Crop filtering is configured in `run_one_video.py`:
-
-```python
 FILTER_MIN_LONG_SIDE = 96
 FILTER_MIN_AREA = 96 * 96
 FILTER_MIN_SHARPNESS = 20.0
@@ -451,356 +451,143 @@ FILTER_MIN_CONTRAST = 12.0
 FILTER_MIN_ASPECT_RATIO = 0.30
 FILTER_MAX_ASPECT_RATIO = 3.50
 FILTER_DEDUPE_HAMMING = 5
-```
 
-### Settings Explained
-
-| Setting | Current Value | What It Does |
-|---|---:|---|
-| `FILTER_MIN_LONG_SIDE` | `96` | Rejects crops where the longest side is smaller than 96 pixels. |
-| `FILTER_MIN_AREA` | `96 * 96` | Rejects crops with a total area smaller than 9216 pixels. |
-| `FILTER_MIN_SHARPNESS` | `20.0` | Rejects blurry crops. |
-| `FILTER_MIN_CONTRAST` | `12.0` | Rejects low-contrast crops. |
-| `FILTER_MIN_ASPECT_RATIO` | `0.30` | Rejects crops that are too narrow or tall. |
-| `FILTER_MAX_ASPECT_RATIO` | `3.50` | Rejects crops that are too wide or flat. |
-| `FILTER_DEDUPE_HAMMING` | `5` | Removes near-duplicate crops using image hashing. |
-
-### If Too Many Crops Are Rejected
-
-Use looser filtering:
-
-```python
-FILTER_MIN_LONG_SIDE = 64
-FILTER_MIN_AREA = 64 * 64
-FILTER_MIN_SHARPNESS = 10.0
-FILTER_MIN_CONTRAST = 8.0
-FILTER_DEDUPE_HAMMING = 3
-```
-
-### If Too Many Bad Crops Are Kept
-
-Use stricter filtering:
-
-```python
-FILTER_MIN_LONG_SIDE = 128
-FILTER_MIN_AREA = 128 * 128
-FILTER_MIN_SHARPNESS = 30.0
-FILTER_MIN_CONTRAST = 15.0
-FILTER_DEDUPE_HAMMING = 6
-```
-
----
-
-## 12. Stage Five: Fish Crop Clustering
-
-### Purpose
-
-The clustering stage groups similar fish crops together.
-
-This can help with:
-
-- Reviewing similar fish images
-- Finding repeated fish appearances
-- Organising fish crops into species-like groups
-- Preparing data for manual labelling
-
-This is handled by:
-
-```text
-src/cluster_fish.py
-```
-
-### Output Folder
-
-Clustered crops are saved into:
-
-```text
-runs/video_runs/<run_name>/clusters/
-```
-
-The clustering stage creates folders such as:
-
-```text
-species_001/
-species_002/
-unknown_cluster/
-```
-
-It also creates two CSV files:
-
-```text
-clusters_summary.csv
-cluster_map.csv
-```
-
-### Configuration
-
-Clustering is configured in `run_one_video.py`:
-
-```python
 CLUSTER_USE_COLOR_HIST = True
 CLUSTER_USE_SIZE_FEATS = True
 CLUSTER_WHITE_BALANCE = True
 CLUSTER_USE_UMAP = False
-CLUSTER_UMAP_DIM = 32
-CLUSTER_UMAP_NEIGHBORS = 10
-CLUSTER_UMAP_MIN_DIST = 0.05
 CLUSTER_MIN_CLUSTER_SIZE = 8
 CLUSTER_MIN_SAMPLES = 5
 ```
-
-### Settings Explained
-
-| Setting | Current Value | What It Does |
-|---|---:|---|
-| `CLUSTER_USE_COLOR_HIST` | `True` | Uses colour information to help group visually similar fish. |
-| `CLUSTER_USE_SIZE_FEATS` | `True` | Uses crop size and aspect ratio as extra clustering features. |
-| `CLUSTER_WHITE_BALANCE` | `True` | Applies simple colour correction before clustering. |
-| `CLUSTER_USE_UMAP` | `False` | Enables optional dimensionality reduction before clustering. |
-| `CLUSTER_UMAP_DIM` | `32` | Number of UMAP dimensions if UMAP is enabled. |
-| `CLUSTER_UMAP_NEIGHBORS` | `10` | Controls how local or global the UMAP grouping is. |
-| `CLUSTER_UMAP_MIN_DIST` | `0.05` | Controls how tightly UMAP places similar points. |
-| `CLUSTER_MIN_CLUSTER_SIZE` | `8` | Minimum number of crops needed to form a cluster. |
-| `CLUSTER_MIN_SAMPLES` | `5` | Controls how strict HDBSCAN is when deciding outliers. |
-
-### If Too Many Crops Go Into `unknown_cluster`
-
-Use looser clustering:
-
-```python
-CLUSTER_MIN_CLUSTER_SIZE = 5
-CLUSTER_MIN_SAMPLES = 2
-```
-
-### If Clusters Are Too Messy
-
-Use stricter clustering:
-
-```python
-CLUSTER_MIN_CLUSTER_SIZE = 12
-CLUSTER_MIN_SAMPLES = 6
-```
-
----
-
-# Running the Project
-
----
-
-## 13. Step One: Add a Video
-
-Place a video file inside:
-
-```text
-data/raw_video/
-```
-
-Example:
-
-```text
-data/raw_video/aquarium_video.mp4
-```
-
----
-
-## 14. Step Two: Check the Model
-
-Make sure the trained YOLO model exists at:
-
-```text
-runs/detect/fish_loop/weights/best.pt
-```
-
----
-
-## 15. Step Three: Run the Pipeline
-
-From the project root folder, run:
-
-```bash
-python src/run_one_video.py
-```
-
-The script will automatically:
-
-1. Find the next video in `data/raw_video/`
-2. Create a new timestamped output folder
-3. Extract frames
-4. Select useful frames
-5. Detect and crop fish
-6. Filter crop quality
-7. Cluster similar fish crops
-8. Move the processed video into `_processed`
-
----
-
-## 16. Output Files and Folders
-
-Each run creates a new folder inside:
-
-```text
-runs/video_runs/
-```
-
-Example:
-
-```text
-runs/video_runs/aquarium_video__2026-04-30_21-38-08/
-```
-
-### Output Folder Breakdown
-
-| Folder or File | Purpose |
-|---|---|
-| `frames/` | All extracted video frames. |
-| `selected_frames/` | Frames selected for fish detection. |
-| `crops/` | Raw fish crops created from YOLO detections. |
-| `crops/crops.csv` | Metadata for each detected fish crop. |
-| `crops_good/` | Crops that passed quality filtering. |
-| `crops_good/filter_report.csv` | Report showing why crops were kept or rejected. |
-| `clusters/` | Fish crops grouped into species-like folders. |
-| `clusters/clusters_summary.csv` | Count of crops in each cluster. |
-| `clusters/cluster_map.csv` | Maps each original crop to its cluster output. |
-
----
-
-# Recommended Configurations
-
----
-
-## 17. Recommended Full Dataset Configuration
-
-Use this when creating a useful dataset from a full aquarium video:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 1
-
-SELECT_MAX_FRAMES = 1200
-SELECT_MIN_SHARPNESS = 5.0
-SELECT_MIN_SCENE_DELTA = 0.02
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 2
-
-CROP_CONF = 0.30
-CROP_IMGSZ = 640
-CROP_PAD = 0.10
-CROP_MIN_SIZE = 40
-CROP_MAX_IMAGES = 4000
-```
-
-This is a good balance between collecting enough data and reducing unnecessary duplicate frames.
-
----
-
-## 18. Fast Testing Configuration
-
-Use this when you want to quickly test that the pipeline works:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 5
-
-SELECT_MAX_FRAMES = 100
-SELECT_MIN_SHARPNESS = 5.0
-SELECT_MIN_SCENE_DELTA = 0.02
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 2
-
-CROP_MAX_IMAGES = 100
-```
-
-This processes fewer frames and is useful for debugging.
-
----
-
-## 19. Maximum Data Collection Configuration
-
-Use this when you want to keep as many frames and fish crops as possible:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 1
-
-SELECT_MAX_FRAMES = 3306
-SELECT_MIN_SHARPNESS = 0.0
-SELECT_MIN_SCENE_DELTA = 0.0
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 1
-
-CROP_CONF = 0.20
-CROP_MAX_IMAGES = 5000
-```
-
-This may produce more duplicate or low-quality crops, but it is useful when building a large dataset.
 
 ---
 
 # Troubleshooting
 
----
+## Dashboard does not open
 
-## 20. Problem: Many Frames Extracted but Few Selected
-
-Example problem:
+Make sure you are opening:
 
 ```text
-Saved 3306 frames
-Selected 7 frames
+src/dist/FishAIDashboard/FishAIDashboard.exe
 ```
 
-This usually means the frame selection stage is too strict.
+Do not open anything from:
 
-Use:
-
-```python
-SELECT_MIN_SCENE_DELTA = 0.02
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 2
+```text
+src/build/
 ```
 
-For maximum retention, use:
+Also make sure `FishAIDashboard.exe` is still beside the `_internal` folder.
 
-```python
-SELECT_MIN_SCENE_DELTA = 0.0
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 1
+---
+
+## Error: missing `ui_helpers`
+
+Rebuild the dashboard:
+
+```bash
+cd src
+build_exe.bat
+```
+
+The build script includes `ui_helpers` as a hidden import.
+
+---
+
+## Error: no module named `cv2`
+
+Install OpenCV:
+
+```bash
+pip install opencv-python
+```
+
+Or reinstall all requirements:
+
+```bash
+pip install -r src\requirements.txt
 ```
 
 ---
 
-## 21. Problem: No Fish Crops Are Saved
+## Error: PowerShell security / activate.ps1 blocked
 
-Possible causes:
+Run this in PowerShell:
 
-- The selected frames folder is empty
-- Too few frames were selected
-- The YOLO confidence is too high
-- The wrong model is being used
-- The detector has not learned the fish properly
-- The minimum crop size is too strict
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.venv\Scripts\Activate.ps1
+```
 
-Try:
+Or use Command Prompt instead:
+
+```bat
+.venv\Scripts\activate.bat
+```
+
+---
+
+## Error: `best.pt` is 1KB
+
+This means Git LFS has not downloaded the real model.
+
+Run:
+
+```bash
+git lfs pull
+git lfs checkout
+```
+
+If the file is still 1KB, delete the project folder and clone again using:
+
+```bash
+git lfs install
+git clone https://github.com/DavidWilson2000/COMP3000.git
+cd COMP3000
+git lfs pull
+```
+
+---
+
+## Pipeline says no video found
+
+Place a video in:
+
+```text
+data/raw_video/
+```
+
+Then run the pipeline again.
+
+---
+
+## Pipeline runs but no crops are produced
+
+Check:
+
+1. `best.pt` exists and is the real model file.
+2. The input video contains visible fish.
+3. The selected frames folder is not empty.
+4. The confidence threshold is not too high.
+
+Try lowering:
 
 ```python
 CROP_CONF = 0.20
-CROP_MIN_SIZE = 20
-```
-
-Also check that the custom model exists:
-
-```text
-runs/detect/fish_loop/weights/best.pt
 ```
 
 ---
 
-## 22. Problem: Too Many False Detections
+## Too many false detections
 
-Increase the detection confidence:
+Increase:
 
 ```python
 CROP_CONF = 0.40
 ```
 
-You can also make filtering stricter:
+Or make filtering stricter:
 
 ```python
 FILTER_MIN_LONG_SIDE = 128
@@ -810,22 +597,9 @@ FILTER_MIN_CONTRAST = 15.0
 
 ---
 
-## 23. Problem: Too Many Crops Are Rejected
+## Most crops go into `unknown_cluster`
 
-Loosen the filter settings:
-
-```python
-FILTER_MIN_LONG_SIDE = 64
-FILTER_MIN_AREA = 64 * 64
-FILTER_MIN_SHARPNESS = 10.0
-FILTER_MIN_CONTRAST = 8.0
-```
-
----
-
-## 24. Problem: Most Crops Go Into `unknown_cluster`
-
-Loosen the clustering settings:
+Try looser clustering:
 
 ```python
 CLUSTER_MIN_CLUSTER_SIZE = 5
@@ -836,11 +610,7 @@ CLUSTER_MIN_SAMPLES = 2
 
 # Processed Video Archive
 
----
-
-## 25. Video Archiving
-
-By default, once a video has been processed, it is moved into:
+After a video is processed, it is moved to:
 
 ```text
 data/raw_video/_processed/
@@ -854,7 +624,7 @@ This is controlled by:
 ARCHIVE_PROCESSED_VIDEO = True
 ```
 
-To stop videos being moved after processing, change it to:
+To stop videos being moved after processing:
 
 ```python
 ARCHIVE_PROCESSED_VIDEO = False
@@ -862,86 +632,62 @@ ARCHIVE_PROCESSED_VIDEO = False
 
 ---
 
-# Dependencies
+# GitHub Notes
 
----
+Generated outputs such as frames, crops, video runs, and temporary build folders are ignored by Git.
 
-## 26. Required Python Packages
+The repository should include:
 
-This project uses:
+```text
+src/
+src/build_exe.bat
+src/requirements.txt
+data/raw_video/sample_video.mp4
+runs/detect/fish_loop/weights/best.pt
+datasets/fish_dataset/
+README.md
+.gitignore
+.gitattributes
+```
 
-- Python
-- OpenCV
-- Ultralytics YOLO
-- PyTorch
-- Torchvision
-- NumPy
-- Pillow
-- scikit-learn
-- HDBSCAN
-- UMAP, optional
+The repository should not include:
 
-Install dependencies using:
-
-```bash
-pip install ultralytics opencv-python torch torchvision numpy pillow scikit-learn hdbscan umap-learn
+```text
+runs/video_runs/<full generated runs>
+src/build/
+src/dist/
+Documents/Final Video.mp4
+large generated frame/crop folders
 ```
 
 ---
 
 # Summary
 
----
+To run the project on a new PC:
 
-## 27. Project Summary
+```bash
+git lfs install
+git clone https://github.com/DavidWilson2000/COMP3000.git
+cd COMP3000
+git lfs pull
 
-Smart Aqua is an automated fish detection and dataset preparation pipeline.
+python -m venv .venv
+.venv\Scripts\activate.bat
+pip install -r src\requirements.txt
 
-It takes raw aquarium footage and turns it into organised fish image data by:
+cd src
+build_exe.bat
+```
 
-1. Extracting frames
-2. Selecting useful frames
-3. Detecting fish
-4. Cropping fish images
-5. Filtering poor-quality crops
-6. Clustering similar fish crops
-
-The main file to configure is:
+Then open:
 
 ```text
-src/run_one_video.py
+src/dist/FishAIDashboard/FishAIDashboard.exe
 ```
 
-The most important settings are:
+To run the pipeline manually instead:
 
-```python
-EXTRACT_EVERY_N_FRAMES
-SELECT_MAX_FRAMES
-SELECT_MIN_SHARPNESS
-SELECT_MIN_SCENE_DELTA
-SELECT_BACKFILL
-SELECT_MIN_FRAME_GAP
-CROP_CONF
-CROP_MAX_IMAGES
-FILTER_MIN_LONG_SIDE
-FILTER_MIN_SHARPNESS
-CLUSTER_MIN_CLUSTER_SIZE
-CLUSTER_MIN_SAMPLES
+```bash
+python src\run_one_video.py
 ```
-
-For most full runs, the recommended setup is:
-
-```python
-EXTRACT_EVERY_N_FRAMES = 1
-
-SELECT_MAX_FRAMES = 1200
-SELECT_MIN_SHARPNESS = 5.0
-SELECT_MIN_SCENE_DELTA = 0.02
-SELECT_BACKFILL = True
-SELECT_MIN_FRAME_GAP = 2
-
-CROP_CONF = 0.30
-CROP_MAX_IMAGES = 4000
-```
-
-This keeps enough frames for useful dataset creation while still reducing repeated and low-quality data.
